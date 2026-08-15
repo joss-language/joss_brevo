@@ -1,0 +1,72 @@
+// src/plugin.joss
+// Plugin oficial para envío de correos vía Brevo REST API en Joss
+
+class Brevo {
+    func client() {
+        return new BrevoClient()
+    }
+
+    func send($to, $subject, $body) {
+        $c = new BrevoClient()
+        return $c->send($to, $subject, $body)
+    }
+}
+
+class BrevoClient {
+    Init constructor() {
+        $this->apiKey = env("BREVO_API", "")
+        $this->fromAddress = env("MAIL_FROM_ADDRESS", "hi@joss.red")
+        $this->fromName = env("MAIL_FROM_NAME", "Joss Red")
+        $this->last_error = ""
+    }
+
+    func apiKey($key) {
+        $this->apiKey = $key
+        return $this
+    }
+
+    func from($email, $name) {
+        $this->fromAddress = $email
+        (!empty($name)) ? { $this->fromName = $name } : {}
+        return $this
+    }
+
+    func lastError() {
+        return $this->last_error
+    }
+
+    func send($to, $subject, $body) {
+        (empty($this->apiKey)) ? {
+            $this->last_error = "Falta configurar la variable BREVO_API en el archivo .env"
+            return false
+        } : {}
+
+        $payload = {
+            "sender": {
+                "name": $this->fromName,
+                "email": $this->fromAddress
+            },
+            "to": [
+                {
+                    "email": $to
+                }
+            ],
+            "subject": $subject,
+            "htmlContent": $body
+        }
+
+        $res = Http::json("POST", "https://api.brevo.com/v3/smtp/email", $payload, {
+            "api-key": $this->apiKey,
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        })
+
+        return (isset($res["messageId"])) ? {
+            $this->last_error = ""
+            return true
+        } : {
+            $this->last_error = (isset($res["message"])) ? $res["message"] : "Error al enviar correo vía Brevo API"
+            return false
+        }
+    }
+}
