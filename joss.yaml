@@ -1,5 +1,5 @@
 name: joss_brevo
-version: 1.0.0
+version: 1.0.1
 type: joss
 description: Plugin oficial para envío de correos transaccionales vía Brevo (Sendinblue) REST API en Joss
 repository: https://github.com/joss-language/joss_brevo
